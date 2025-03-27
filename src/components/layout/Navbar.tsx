@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom'
-import { Bell, Home, Menu, MessageSquare, Search, User } from 'lucide-react'
+import { Bell, Home, Menu, MessageSquare, Search, User, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
@@ -39,13 +39,23 @@ const Navbar = () => {
                 <span className="sr-only">Home</span>
               </Link>
             </Button>
-            <Button variant="ghost" size="icon">
-              <MessageSquare className="h-5 w-5" />
-              <span className="sr-only">Messages</span>
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/messages">
+                <MessageSquare className="h-5 w-5" />
+                <span className="sr-only">Messages</span>
+              </Link>
             </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-              <span className="sr-only">Notifications</span>
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/notifications">
+                <Bell className="h-5 w-5" />
+                <span className="sr-only">Notifications</span>
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/groups">
+                <Users className="h-5 w-5" />
+                <span className="sr-only">Groups</span>
+              </Link>
             </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link to="/profile/me">
@@ -72,13 +82,23 @@ const Navbar = () => {
                     Home
                   </Link>
                 </Button>
-                <Button variant="ghost" className="justify-start">
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  Messages
+                <Button variant="ghost" className="justify-start" asChild>
+                  <Link to="/messages">
+                    <MessageSquare className="h-5 w-5 mr-2" />
+                    Messages
+                  </Link>
                 </Button>
-                <Button variant="ghost" className="justify-start">
-                  <Bell className="h-5 w-5 mr-2" />
-                  Notifications
+                <Button variant="ghost" className="justify-start" asChild>
+                  <Link to="/notifications">
+                    <Bell className="h-5 w-5 mr-2" />
+                    Notifications
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="justify-start" asChild>
+                  <Link to="/groups">
+                    <Users className="h-5 w-5 mr-2" />
+                    Groups
+                  </Link>
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/profile/me">
