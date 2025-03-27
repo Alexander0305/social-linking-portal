@@ -242,7 +242,12 @@ const GroupsDirectory = () => {
               <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-medium mb-2">You haven't joined any groups yet</h3>
               <p className="text-muted-foreground mb-4">Discover and join groups that match your interests</p>
-              <Button onClick={() => document.querySelector('[data-value="discover"]')?.click()}>
+              <Button onClick={() => {
+                const element = document.querySelector('[data-value="discover"]');
+                if (element) {
+                  (element as HTMLElement).click();
+                }
+              }}>
                 Discover Groups
               </Button>
             </div>

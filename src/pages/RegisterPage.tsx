@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,36 +13,45 @@ const RegisterPage = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { signUp, loading } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     
-    // Simulate registration delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    if (name && username && email && password) {
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created successfully.",
-      })
-      navigate('/login')
-    } else {
+    if (!name || !username || !email || !password) {
       toast({
         title: "Registration failed",
         description: "Please fill in all fields and try again.",
         variant: "destructive",
       })
+      return
     }
     
-    setLoading(false)
+    if (password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    const { error } = await signUp(email, password, {
+      full_name: name,
+      username,
+      avatar: '',
+      bio: '',
+    })
+    
+    if (!error) {
+      navigate('/login')
+    }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-background to-muted/30">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>

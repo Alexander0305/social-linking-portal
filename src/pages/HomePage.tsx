@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { Image, Video, Smile, Send, Heart, MessageSquare, Share2 } from 'lucide-react'
+import { Image, Video, Smile, Send, Loader2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
@@ -9,51 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
 import StoriesCarousel from '@/components/stories/StoriesCarousel'
 import FriendSuggestions from '@/components/friends/FriendSuggestions'
+import PostCard from '@/components/post/PostCard'
+import { useAuth } from '@/contexts/AuthContext'
+import { useData } from '@/contexts/DataContext'
 
-// Sample data
-const posts = [
-  {
-    id: 1,
-    author: {
-      name: 'John Doe',
-      avatar: 'JD',
-      username: 'johndoe'
-    },
-    content: 'Just finished my first React project! Anyone have any tips for a beginner?',
-    timestamp: '2 hours ago',
-    likes: 24,
-    comments: 5,
-    shares: 2
-  },
-  {
-    id: 2,
-    author: {
-      name: 'Jane Smith',
-      avatar: 'JS',
-      username: 'janesmith'
-    },
-    content: 'Beautiful sunset at the beach today! 🌅 #nature #sunset #beach',
-    timestamp: '5 hours ago',
-    likes: 56,
-    comments: 8,
-    shares: 12
-  },
-  {
-    id: 3,
-    author: {
-      name: 'Alex Johnson',
-      avatar: 'AJ',
-      username: 'alexj'
-    },
-    content: 'Working from home today. Anyone else having productivity tips?',
-    timestamp: '1 day ago',
-    likes: 15,
-    comments: 10,
-    shares: 1
-  }
-]
-
-// Sample stories data
+// Sample stories data (would come from backend in a real app)
 const sampleStories = [
   {
     id: '1',
@@ -105,15 +65,21 @@ const sampleStories = [
 const HomePage = () => {
   const [newPost, setNewPost] = useState('')
   const { toast } = useToast()
+  const { user } = useAuth()
+  const { posts, createPost, isLoading, loadPosts } = useData()
+  const [postLoading, setPostLoading] = useState(false)
 
-  const handlePostSubmit = () => {
+  const handlePostSubmit = async () => {
     if (newPost.trim()) {
-      toast({
-        title: "Post created",
-        description: "Your post has been published successfully.",
-      })
-      setNewPost('')
+      setPostLoading(true);
+      await createPost(newPost.trim());
+      setNewPost('');
+      setPostLoading(false);
     }
+  }
+
+  const handleLoadMore = () => {
+    loadPosts(10, posts.length);
   }
 
   return (
@@ -130,8 +96,8 @@ const HomePage = () => {
             <CardHeader className="pb-3">
               <div className="flex items-start gap-4">
                 <Avatar>
-                  <AvatarImage src="" alt="Your avatar" />
-                  <AvatarFallback>YA</AvatarFallback>
+                  <AvatarImage src={user?.user_metadata?.avatar || ""} alt="Your avatar" />
+                  <AvatarFallback>{user?.user_metadata?.full_name?.substring(0, 2).toUpperCase() || "YA"}</AvatarFallback>
                 </Avatar>
                 <Textarea 
                   placeholder="What's on your mind?"
@@ -158,11 +124,20 @@ const HomePage = () => {
               </div>
               <Button 
                 onClick={handlePostSubmit} 
-                disabled={!newPost.trim()}
+                disabled={!newPost.trim() || postLoading}
                 size="sm"
               >
-                <Send className="mr-2 h-4 w-4" />
-                Post
+                {postLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Post
+                  </>
+                )}
               </Button>
             </CardFooter>
           </Card>
@@ -175,39 +150,42 @@ const HomePage = () => {
               <TabsTrigger value="trending">Trending</TabsTrigger>
             </TabsList>
             <TabsContent value="all" className="mt-4 space-y-4">
-              {posts.map((post) => (
-                <Card key={post.id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-4">
-                      <Avatar>
-                        <AvatarImage src="" alt={post.author.name} />
-                        <AvatarFallback>{post.author.avatar}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold">{post.author.name}</div>
-                        <div className="text-xs text-muted-foreground">@{post.author.username} · {post.timestamp}</div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <p>{post.content}</p>
+              {isLoading && posts.length === 0 ? (
+                <Card>
+                  <CardContent className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </CardContent>
-                  <CardFooter className="flex justify-between border-t pt-3">
-                    <Button variant="ghost" size="sm">
-                      <Heart className="mr-1 h-4 w-4" />
-                      <span className="text-xs">{post.likes}</span>
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <MessageSquare className="mr-1 h-4 w-4" />
-                      <span className="text-xs">{post.comments}</span>
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Share2 className="mr-1 h-4 w-4" />
-                      <span className="text-xs">{post.shares}</span>
-                    </Button>
-                  </CardFooter>
                 </Card>
-              ))}
+              ) : posts.length > 0 ? (
+                <>
+                  {posts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                  
+                  <div className="flex justify-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleLoadMore}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        "Load More"
+                      )}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <p className="text-muted-foreground">No posts yet. Be the first to post!</p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
             <TabsContent value="friends" className="mt-4">
               <Card>

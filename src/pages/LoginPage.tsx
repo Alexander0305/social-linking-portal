@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,36 +11,35 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 const LoginPage = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { signIn, loading } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
+  
+  // Get the redirect path from location state or default to home
+  const from = (location.state as any)?.from?.pathname || '/'
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     
-    // Simulate login delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    if (email && password) {
+    if (!email || !password) {
       toast({
-        title: "Login successful",
-        description: "You have been logged in successfully.",
-      })
-      navigate('/')
-    } else {
-      toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
+        title: "Error",
+        description: "Please enter both email and password",
         variant: "destructive",
       })
+      return
     }
     
-    setLoading(false)
+    const { error } = await signIn(email, password)
+    
+    if (!error) {
+      navigate(from, { replace: true })
+    }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-background to-muted/30">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
