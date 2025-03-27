@@ -29,8 +29,16 @@ import EventDetailPage from '@/pages/EventDetailPage'
 import ProductDetailPage from '@/pages/ProductDetailPage'
 import BlogPostPage from '@/pages/BlogPostPage'
 import ForumThreadPage from '@/pages/ForumThreadPage'
+import CallPage from '@/pages/CallPage'
+import { useEffect } from 'react'
+import { initializeSupabase } from '@/lib/supabase-config'
 
 function App() {
+  useEffect(() => {
+    // Initialize Supabase with realtime subscriptions
+    initializeSupabase();
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="light" storageKey="social-theme">
       <AuthProvider>
@@ -39,6 +47,11 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/call/:id" element={
+              <ProtectedRoute>
+                <CallPage />
+              </ProtectedRoute>
+            } />
             <Route path="/" element={<Layout />}>
               <Route index element={<HomePage />} />
               <Route path="/profile/:id" element={
