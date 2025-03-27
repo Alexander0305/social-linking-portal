@@ -1,8 +1,19 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase, signIn, signUp, signOut, getCurrentUser } from '@/lib/supabase';
+import { 
+  supabase, 
+  signIn, 
+  signUp, 
+  signOut, 
+  getCurrentUser, 
+  signInWithGoogle, 
+  signInWithFacebook,
+  resetPassword,
+  updatePassword
+} from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import { createNotification, updateUserProfile } from '@/services/database';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +21,11 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
   signUp: (email: string, password: string, userData: Record<string, any>) => Promise<{ data: any; error: any }>;
   signOut: () => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ data: any; error: any }>;
+  signInWithFacebook: () => Promise<{ data: any; error: any }>;
+  resetPassword: (email: string) => Promise<{ data: any; error: any }>;
+  updatePassword: (password: string) => Promise<{ data: any; error: any }>;
+  updateProfile: (updates: Record<string, any>) => Promise<{ data: any; error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         if (session?.user) {
           setUser(session.user);
+          
+          // If this is a new sign-up, create a profile entry
+          if (event === 'SIGNED_IN') {
+            // Could check and create profile if needed
+          }
         } else {
           setUser(null);
         }
@@ -113,12 +134,106 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return result;
   };
 
+  const handleSignInWithGoogle = async () => {
+    const result = await signInWithGoogle();
+    
+    if (result.error) {
+      toast({
+        title: "Authentication error",
+        description: result.error.message,
+        variant: "destructive",
+      });
+    }
+    
+    return result;
+  };
+
+  const handleSignInWithFacebook = async () => {
+    const result = await signInWithFacebook();
+    
+    if (result.error) {
+      toast({
+        title: "Authentication error",
+        description: result.error.message,
+        variant: "destructive",
+      });
+    }
+    
+    return result;
+  };
+
+  const handleResetPassword = async (email: string) => {
+    const result = await resetPassword(email);
+    
+    if (result.error) {
+      toast({
+        title: "Password reset error",
+        description: result.error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Password reset email sent",
+        description: "Please check your email for the password reset link.",
+      });
+    }
+    
+    return result;
+  };
+
+  const handleUpdatePassword = async (password: string) => {
+    const result = await updatePassword(password);
+    
+    if (result.error) {
+      toast({
+        title: "Password update error",
+        description: result.error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated.",
+      });
+    }
+    
+    return result;
+  };
+
+  const handleUpdateProfile = async (updates: Record<string, any>) => {
+    if (!user) {
+      return { data: null, error: new Error('User not authenticated') };
+    }
+
+    const result = await updateUserProfile(user.id, updates);
+    
+    if (result.error) {
+      toast({
+        title: "Profile update error",
+        description: result.error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+    }
+    
+    return result;
+  };
+
   const value = {
     user,
     loading,
     signIn: handleSignIn,
     signUp: handleSignUp,
     signOut: handleSignOut,
+    signInWithGoogle: handleSignInWithGoogle,
+    signInWithFacebook: handleSignInWithFacebook,
+    resetPassword: handleResetPassword,
+    updatePassword: handleUpdatePassword,
+    updateProfile: handleUpdateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
